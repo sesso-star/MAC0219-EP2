@@ -8,7 +8,10 @@
 
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
+#include <stdio.h>
+extern "C" {
 #include "base64.h"
+}
 
 /****************************** MACROS ******************************/
 #define NEWLINE_INVL 76
@@ -16,6 +19,8 @@
 /**************************** VARIABLES *****************************/
 // Note: To change the charset to a URL encoding, replace the '+' and '/' with '*' and '-'
 static const BYTE charset[]={"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+
+void checkCudaErr(); 
 
 /*********************** FUNCTION DEFINITIONS ***********************/
 BYTE revchar(char ch)
@@ -30,13 +35,27 @@ BYTE revchar(char ch)
         ch = 62;
     else if (ch == '/')
         ch = 63;
-
     return(ch);
 }
 
-size_t base64_encode(const BYTE in[], BYTE out[], size_t len, int newline_flag)
-{
+
+__global__
+void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_out, 
+        int new_line_flag) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < len) {
+        cuda_out[i] = cuda_in[i];
+    }
+}
+
+
+extern "C"
+size_t base64_encode(const BYTE in[], BYTE out[], size_t len, 
+        int newline_flag) {
     size_t idx, idx2, blks, blk_ceiling, left_over, newline_count = 0;
+    int blockSize = 256, i;
+    BYTE *cuda_in, *cuda_out;
+    cudaError_t code;
 
     blks = (len / 3);
     left_over = len % 3;
@@ -46,47 +65,82 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len, int newline_flag)
         if (left_over)
             idx2 += 4;
         if (newline_flag)
-            idx2 += len / 57;   // (NEWLINE_INVL / 4) * 3 = 57. One newline per 57 input bytes.
+            idx2 += len / 57;   
     }
     else {
-        // Since 3 input bytes = 4 output bytes, determine out how many even sets of
-        // 3 bytes the input has.
+        size_t len2 = len + blks + left_over;
+        if (newline_flag)
+            len2 += len / 57;
+
+        cudaMalloc(&cuda_in, sizeof(BYTE) * len);
+        checkCudaErr();
+        cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
+        checkCudaErr();
+        cudaMemcpy(cuda_in, in, len * sizeof(BYTE), 
+                cudaMemcpyHostToDevice);
+        checkCudaErr();
+        for (i = 0; i < len; i++)
+            out[i] = 0;
+        
         blk_ceiling = blks * 3;
-        for (idx = 0, idx2 = 0; idx < blk_ceiling; idx += 3, idx2 += 4) {
-            out[idx2]     = charset[in[idx] >> 2];
-            out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];
-            out[idx2 + 2] = charset[((in[idx + 1] & 0x0f) << 2) | (in[idx + 2] >> 6)];
-            out[idx2 + 3] = charset[in[idx + 2] & 0x3F];
+        cuda_encode<<<blk_ceiling / blockSize + 1, blockSize>>>
+            (len, cuda_in, cuda_out, newline_flag);
+        checkCudaErr();
+        /*printf("%d blocks and %d threads on each block", */
+                /*blk_ceiling / blockSize + 1, blockSize);*/
+        cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE), cudaMemcpyDeviceToHost);
+        checkCudaErr();
+        
+        for (i = 0; i < len; i++) {
+            printf("%c", out[i]);
+        }
+        printf("\n");
+        /*for (idx = 0, idx2 = 0; idx < blk_ceiling; idx += 3, idx2 += 4) {*/
+            /*out[idx2]     = charset[in[idx] >> 2];*/
+            /*out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];*/
+            /*out[idx2 + 2] = charset[((in[idx + 1] & 0x0f) << 2) | (in[idx + 2] >> 6)];*/
+            /*out[idx2 + 3] = charset[in[idx + 2] & 0x3F];*/
             // The offical standard requires a newline every 76 characters.
             // (Eg, first newline is character 77 of the output.)
-            if (((idx2 - newline_count + 4) % NEWLINE_INVL == 0) && newline_flag) {
-                out[idx2 + 4] = '\n';
-                idx2++;
-                newline_count++;
-            }
-        }
+            /*if (((idx2 - newline_count + 4) % NEWLINE_INVL == 0) && newline_flag) {*/
+                /*out[idx2 + 4] = '\n';*/
+                /*idx2++;*/
+                /*newline_count++;*/
+            /*}*/
+        /*}*/
 
-        if (left_over == 1) {
-            out[idx2]     = charset[in[idx] >> 2];
-            out[idx2 + 1] = charset[(in[idx] & 0x03) << 4];
-            out[idx2 + 2] = '=';
-            out[idx2 + 3] = '=';
-            idx2 += 4;
-        }
-        else if (left_over == 2) {
-            out[idx2]     = charset[in[idx] >> 2];
-            out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];
-            out[idx2 + 2] = charset[(in[idx + 1] & 0x0F) << 2];
-            out[idx2 + 3] = '=';
-            idx2 += 4;
-        }
+        /*if (left_over == 1) {*/
+            /*out[idx2]     = charset[in[idx] >> 2];*/
+            /*out[idx2 + 1] = charset[(in[idx] & 0x03) << 4];*/
+            /*out[idx2 + 2] = '=';*/
+            /*out[idx2 + 3] = '=';*/
+            /*idx2 += 4;*/
+        /*}*/
+        /*else if (left_over == 2) {*/
+            /*out[idx2]     = charset[in[idx] >> 2];*/
+            /*out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];*/
+            /*out[idx2 + 2] = charset[(in[idx + 1] & 0x0F) << 2];*/
+            /*out[idx2 + 3] = '=';*/
+            /*idx2 += 4;*/
+        /*}*/
     }
 
+    cudaFree(cuda_in);
+    cudaFree(cuda_out);
     return(idx2);
 }
 
-size_t base64_decode(const BYTE in[], BYTE out[], size_t len)
-{
+
+void checkCudaErr() {
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Erro na chamada cuda: ");
+        printf("%s\n", cudaGetErrorString(err));
+    }
+}
+
+
+size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     BYTE ch;
     size_t idx, idx2, blks, blk_ceiling, left_over;
 
@@ -132,8 +186,4 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len)
     }
 
     return(idx);
-}
-
-int main() {
-    return 0;
 }
