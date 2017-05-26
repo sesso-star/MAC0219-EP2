@@ -40,11 +40,23 @@ BYTE revchar(char ch)
 
 
 __global__
-void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_out, 
-        int new_line_flag) {
+void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_charset, 
+        BYTE *cuda_out, int new_line_flag) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < len) {
-        cuda_out[i] = cuda_in[i];
+        printf("i = %d\n", i);
+        int i_in = i * 3;
+        int i_out = i * 4;
+
+        cuda_out[i_out] = cuda_charset[cuda_in[i_in] >> 2];
+        cuda_out[i_out + 1] = 
+            cuda_charset[((cuda_in[i_in] & 0x03) << 4) |
+                         (cuda_in[i_in + 1] >> 4)];
+        cuda_out[i_out + 2] = 
+            cuda_charset[((cuda_in[i_in + 1] & 0x0f) << 2) |
+                         (cuda_in[i_in + 2] >> 6)];
+        cuda_out[i_out + 3] = 
+            cuda_charset[cuda_in[i_in + 2] & 0x3F];
     }
 }
 
@@ -52,82 +64,77 @@ void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_out,
 extern "C"
 size_t base64_encode(const BYTE in[], BYTE out[], size_t len, 
         int newline_flag) {
-    size_t idx, idx2, blks, blk_ceiling, left_over, newline_count = 0;
-    int blockSize = 256, i;
-    BYTE *cuda_in, *cuda_out;
+    size_t blks, blk_ceiling, left_over, len2;
+    int blockSize = 8;
+    int i;
+    BYTE *cuda_in, *cuda_out, *cuda_charset;
     cudaError_t code;
 
     blks = (len / 3);
     left_over = len % 3;
+    len2 = blks * 4;
+    if (left_over)
+        len2 += 4;
+    if (newline_flag)
+        len2 += len / 57;
 
-    if (out == NULL) {
-        idx2 = blks * 4 ;
-        if (left_over)
-            idx2 += 4;
-        if (newline_flag)
-            idx2 += len / 57;   
+    if (out == NULL) 
+        return len2;
+    
+    printf("len2 = %d\nlen = %d\n", len2, len);
+    cudaMalloc(&cuda_in, sizeof(BYTE) * len);
+    checkCudaErr();
+    cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
+    checkCudaErr();
+    cudaMalloc(&cuda_charset, sizeof(BYTE) * 64);
+    checkCudaErr();
+    cudaMemcpy(cuda_in, in, len * sizeof(BYTE), 
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
+    cudaMemcpy(cuda_out, out, len * sizeof(BYTE), 
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
+    cudaMemcpy(cuda_charset, charset, 64 * sizeof(BYTE), 
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
+
+    /* Process text from idx 0 to 3 * blks */
+    cuda_encode<<<blks / blockSize + 1, blockSize>>>
+        (len, cuda_in, cuda_charset, cuda_out, newline_flag);
+    checkCudaErr();
+    printf("%d blocks and %d threads on each block", 
+            blks / blockSize + 1, blockSize);
+    cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
+            cudaMemcpyDeviceToHost);
+    checkCudaErr();
+    /* Process the ramainder part */
+    printf("leftover = %d", left_over);
+    blk_ceiling = blks * 3;
+    len2 = blks * 4;
+    if (left_over == 1) {
+        out[len2++] = charset[in[blk_ceiling] >> 2];
+        out[len2++] = charset[(in[blk_ceiling] & 0x03) << 4];
+        out[len2++] = '=';
+        out[len2++] = '=';
     }
-    else {
-        size_t len2 = len + blks + left_over;
-        if (newline_flag)
-            len2 += len / 57;
-
-        cudaMalloc(&cuda_in, sizeof(BYTE) * len);
-        checkCudaErr();
-        cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
-        checkCudaErr();
-        cudaMemcpy(cuda_in, in, len * sizeof(BYTE), 
-                cudaMemcpyHostToDevice);
-        checkCudaErr();
-        for (i = 0; i < len; i++)
-            out[i] = 0;
-        
-        blk_ceiling = blks * 3;
-        cuda_encode<<<blk_ceiling / blockSize + 1, blockSize>>>
-            (len, cuda_in, cuda_out, newline_flag);
-        checkCudaErr();
-        /*printf("%d blocks and %d threads on each block", */
-                /*blk_ceiling / blockSize + 1, blockSize);*/
-        cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE), cudaMemcpyDeviceToHost);
-        checkCudaErr();
-        
-        for (i = 0; i < len; i++) {
-            printf("%c", out[i]);
-        }
-        printf("\n");
-        /*for (idx = 0, idx2 = 0; idx < blk_ceiling; idx += 3, idx2 += 4) {*/
-            /*out[idx2]     = charset[in[idx] >> 2];*/
-            /*out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];*/
-            /*out[idx2 + 2] = charset[((in[idx + 1] & 0x0f) << 2) | (in[idx + 2] >> 6)];*/
-            /*out[idx2 + 3] = charset[in[idx + 2] & 0x3F];*/
-            // The offical standard requires a newline every 76 characters.
-            // (Eg, first newline is character 77 of the output.)
-            /*if (((idx2 - newline_count + 4) % NEWLINE_INVL == 0) && newline_flag) {*/
-                /*out[idx2 + 4] = '\n';*/
-                /*idx2++;*/
-                /*newline_count++;*/
-            /*}*/
-        /*}*/
-
-        /*if (left_over == 1) {*/
-            /*out[idx2]     = charset[in[idx] >> 2];*/
-            /*out[idx2 + 1] = charset[(in[idx] & 0x03) << 4];*/
-            /*out[idx2 + 2] = '=';*/
-            /*out[idx2 + 3] = '=';*/
-            /*idx2 += 4;*/
-        /*}*/
-        /*else if (left_over == 2) {*/
-            /*out[idx2]     = charset[in[idx] >> 2];*/
-            /*out[idx2 + 1] = charset[((in[idx] & 0x03) << 4) | (in[idx + 1] >> 4)];*/
-            /*out[idx2 + 2] = charset[(in[idx + 1] & 0x0F) << 2];*/
-            /*out[idx2 + 3] = '=';*/
-            /*idx2 += 4;*/
-        /*}*/
+    else if (left_over == 2) {
+        printf("oioioi\n");
+        out[len2++] = charset[in[blk_ceiling] >> 2];
+        out[len2++] = charset[((in[blk_ceiling] & 0x03) << 4) |
+            (in[blk_ceiling + 1] >> 4)];
+        out[len2++] = charset[(in[blk_ceiling + 1] & 0x0F) << 2];
+        out[len2++] = '=';
     }
+
+    printf("\n");
+    for (i = 0; i < len2; i++) {
+        printf("%c", out[i]);
+    }
+    printf("\n");
 
     cudaFree(cuda_in);
     cudaFree(cuda_out);
-    return(idx2);
+    return(len2);
 }
 
 

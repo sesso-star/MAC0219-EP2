@@ -19,4 +19,4 @@ base64.o: base64.c
 clean:
 	rm base64_test_cuda
 	rm base64_test_seq
-	rm *.o
+	rm -f *.o

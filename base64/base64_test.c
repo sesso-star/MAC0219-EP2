@@ -48,10 +48,9 @@ int base64_test()
 
 int main()
 {
-    BYTE buf[1024];
-    BYTE text[1024] = "um dois tres cante legal";
-    /*printf("Base64 tests: %s\n", base64_test() ? "PASSED" : "FAILED");*/
-    base64_encode(text, buf, strlen(text), 1);
-    printf("aloha");
+    /*BYTE buf[1024];*/
+    /*BYTE text[1024] = "foobar";*/
+    printf("Base64 tests: %s\n", base64_test() ? "PASSED" : "FAILED");
+    /*base64_encode(text, buf, strlen(text), 1);*/
     return 0;
 }
