@@ -6,23 +6,31 @@
 * Details:    Implementation of the Base64 encoding algorithm.
 *********************************************************************/
 
-/*************************** HEADER FILES ***************************/
 #include <stdlib.h>
 #include <stdio.h>
+
 extern "C" {
-#include "base64.h"
+    #include "base64.h"
 }
 
-/****************************** MACROS ******************************/
 #define NEWLINE_INVL 76
 
-/**************************** VARIABLES *****************************/
-// Note: To change the charset to a URL encoding, replace the '+' and '/' with '*' and '-'
-static const BYTE charset[]={"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+/* Variables */
+// Note: To change the charset to a URL encoding, replace the '+' 
+// and '/' with '*' and '-'
+static const BYTE charset[] = 
+    {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
 
-void checkCudaErr(); 
 
-/*********************** FUNCTION DEFINITIONS ***********************/
+void checkCudaErr() {
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("Erro na chamada cuda: ");
+        printf("%s\n", cudaGetErrorString(err));
+    }
+}
+
+
 BYTE revchar(char ch)
 {
     if (ch >= 'A' && ch <= 'Z')
@@ -44,18 +52,30 @@ void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_charset,
         BYTE *cuda_out, int new_line_flag) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < len) {
-        printf("i = %d\n", i);
         int i_in = i * 3;
-        int i_out = i * 4;
-
-        cuda_out[i_out] = cuda_charset[cuda_in[i_in] >> 2];
-        cuda_out[i_out + 1] = 
+        int m = NEWLINE_INVL + 1;
+        int new_lines = i * 4 / m;
+        int i_out = i * 4 + new_lines;
+        
+        if (new_line_flag && i_out % m == m - 1)
+            cuda_out[i_out++] = '\n';
+        cuda_out[i_out++] = cuda_charset[cuda_in[i_in] >> 2];
+       
+        if (new_line_flag && i_out % m == m - 1)
+            cuda_out[i_out++] = '\n';
+        cuda_out[i_out++] = 
             cuda_charset[((cuda_in[i_in] & 0x03) << 4) |
                          (cuda_in[i_in + 1] >> 4)];
-        cuda_out[i_out + 2] = 
+
+        if (new_line_flag && i_out % m == m - 1)
+            cuda_out[i_out++] = '\n';
+        cuda_out[i_out++] = 
             cuda_charset[((cuda_in[i_in + 1] & 0x0f) << 2) |
                          (cuda_in[i_in + 2] >> 6)];
-        cuda_out[i_out + 3] = 
+        
+        if (new_line_flag && i_out % m == m - 1)
+            cuda_out[i_out++] = '\n';
+        cuda_out[i_out++] = 
             cuda_charset[cuda_in[i_in + 2] & 0x3F];
     }
 }
@@ -65,10 +85,8 @@ extern "C"
 size_t base64_encode(const BYTE in[], BYTE out[], size_t len, 
         int newline_flag) {
     size_t blks, blk_ceiling, left_over, len2;
-    int blockSize = 8;
-    int i;
+    int blockSize = 256;
     BYTE *cuda_in, *cuda_out, *cuda_charset;
-    cudaError_t code;
 
     blks = (len / 3);
     left_over = len % 3;
@@ -81,7 +99,6 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
     if (out == NULL) 
         return len2;
     
-    printf("len2 = %d\nlen = %d\n", len2, len);
     cudaMalloc(&cuda_in, sizeof(BYTE) * len);
     checkCudaErr();
     cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
@@ -100,17 +117,14 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
 
     /* Process text from idx 0 to 3 * blks */
     cuda_encode<<<blks / blockSize + 1, blockSize>>>
-        (len, cuda_in, cuda_charset, cuda_out, newline_flag);
+        (blks, cuda_in, cuda_charset, cuda_out, newline_flag);
     checkCudaErr();
-    printf("%d blocks and %d threads on each block", 
-            blks / blockSize + 1, blockSize);
     cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
             cudaMemcpyDeviceToHost);
     checkCudaErr();
     /* Process the ramainder part */
-    printf("leftover = %d", left_over);
     blk_ceiling = blks * 3;
-    len2 = blks * 4;
+    len2 = blks * 4 + (blks * 4 / (NEWLINE_INVL + 1));
     if (left_over == 1) {
         out[len2++] = charset[in[blk_ceiling] >> 2];
         out[len2++] = charset[(in[blk_ceiling] & 0x03) << 4];
@@ -118,19 +132,13 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
         out[len2++] = '=';
     }
     else if (left_over == 2) {
-        printf("oioioi\n");
         out[len2++] = charset[in[blk_ceiling] >> 2];
         out[len2++] = charset[((in[blk_ceiling] & 0x03) << 4) |
             (in[blk_ceiling + 1] >> 4)];
         out[len2++] = charset[(in[blk_ceiling + 1] & 0x0F) << 2];
         out[len2++] = '=';
     }
-
-    printf("\n");
-    for (i = 0; i < len2; i++) {
-        printf("%c", out[i]);
-    }
-    printf("\n");
+    out[len2] = '\0';
 
     cudaFree(cuda_in);
     cudaFree(cuda_out);
@@ -138,17 +146,7 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
 }
 
 
-void checkCudaErr() {
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        printf("Erro na chamada cuda: ");
-        printf("%s\n", cudaGetErrorString(err));
-    }
-}
-
-
 size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
-    BYTE ch;
     size_t idx, idx2, blks, blk_ceiling, left_over;
 
     if (in[len - 1] == '=')
