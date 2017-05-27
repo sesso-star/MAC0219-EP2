@@ -143,16 +143,13 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
 }
 
 
-/*for (idx = 0, idx2 = 0; idx2 < blk_ceiling; idx += 3, idx2 += 4) {*/
-        /*if (in[idx2] == '\n')*/
-            /*idx2++;*/
-        /*out[idx] = (revchar[in[idx2]] << 2) | */
-            /*((revchar[in[idx2 + 1]] & 0x30) >> 4);*/
-        /*out[idx + 1] = (revchar[in[idx2 + 1]] << 4) |*/
-            /*(revchar[in[idx2 + 2]] >> 2);*/
-        /*out[idx + 2] = (revchar[in[idx2 + 2]] << 6) |*/
-            /*revchar[in[idx2 + 3]];*/
-/*}*/
+__device__
+int next_in_idx(const BYTE *cuda_in, int idx) {
+    idx++;
+    if (cuda_in[idx] == '\n') 
+        idx++;
+    return idx;
+}
 
 
 __global__
@@ -162,23 +159,51 @@ void cuda_decode(size_t len, const BYTE *cuda_in, BYTE *cuda_out,
     if (i < len) {
         int m = NEWLINE_INVL + 1;
         int new_lines = i * 4 / m;
-        int i_in = i * 4;
-        int i_out = i * 3 - new_lines;
-        cuda_out[i_out++] = cuda_in[i_in++];
+        int i_in = next_in_idx(cuda_in, i * 4 + new_lines - 1);
+        int i_out = i * 3;
+        int a, b;
+        int i1, i2, i3, i4, o1, o2, o3;
+
+        a = cuda_revchar[cuda_in[i_in]] << 2; 
+        i1 = cuda_in[i_in];
+        i_in = next_in_idx(cuda_in, i_in);
+        i2 = cuda_in[i_in];
+        b = (cuda_revchar[cuda_in[i_in]] & 0x30) >> 4;
+        cuda_out[i_out++] = a | b;
+        o1 = a | b;
+    
+        a = cuda_revchar[cuda_in[i_in]] << 4;
+        i_in = next_in_idx(cuda_in, i_in);
+        i3 = cuda_in[i_in];
+        b = cuda_revchar[cuda_in[i_in]] >> 2;
+        cuda_out[i_out++] = a | b;
+        o2 = a | b;
+
+        a = cuda_revchar[cuda_in[i_in]] << 6;
+        i_in = next_in_idx(cuda_in, i_in);
+        i4 = cuda_in[i_in];
+        b = cuda_revchar[cuda_in[i_in]];
+        cuda_out[i_out] = a | b;
+        o3 = a | b;
     }
 }
 
 
 size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
-    size_t len2, idx, idx2, blks, blk_ceiling, left_over;
+    size_t len2, blks, blk_ceiling, left_over;
     size_t no_newline_len, no_newline_leftover;
-    int i, newline_flag = 0;
+    int i;
     int block_size = 256;
     BYTE *revchar = (BYTE *) malloc(256 * sizeof(BYTE));
     BYTE *cuda_revchar, *cuda_in, *cuda_out;
 
-    for (i = 0; i < 64; i++) 
+    for (i = 0; i < 256; i++)
+        revchar[i] = 'A';
+    for (i = 0; i < 64; i++)
         revchar[charset[i]] = i;
+
+    for (i = 0; i < len; i++)
+        out[i] = 0;
 
     /* Calculates output length */
     if (in[len - 1] == '=') len--;
@@ -187,11 +212,12 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
         no_newline_len = len - len / (NEWLINE_INVL + 1);
     len2 = (no_newline_len / 4) * 3;
     no_newline_leftover = no_newline_len % 4;
-    if (no_newline_leftover > 1)
-        len2 += no_newline_leftover - 1;
-
-    if (out == NULL)
+    
+    if (out == NULL) {
+        if (no_newline_leftover > 1)
+            len2 += no_newline_leftover - 1;
         return len2;
+    }
  
     blks = len / 4;
     left_over = len % 4;
@@ -205,19 +231,23 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     cudaMemcpy(cuda_in, in, len * sizeof(BYTE),
             cudaMemcpyHostToDevice);
     checkCudaErr();
+    cudaMemcpy(cuda_out, out, len2 * sizeof(BYTE),
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
     cudaMemcpy(cuda_revchar, revchar, 256 * sizeof(BYTE), 
             cudaMemcpyHostToDevice);
     checkCudaErr();
 
-    blk_ceiling = blks * 4;
     /* Process idx from 0 to 4 * blks */
-    cuda_decode<<<blks / block_size + 1, block_size>>>(len, cuda_in,
-            cuda_out, cuda_revchar);
+    cuda_decode<<<blks / block_size + 1, block_size>>>(blks,
+            cuda_in, cuda_out, cuda_revchar);
     checkCudaErr();
     cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE), 
             cudaMemcpyDeviceToHost);
+    checkCudaErr();
    
     /* Process the remainder part */
+    blk_ceiling = blks * 4;
     if (left_over == 2) 
         out[len2++] = (revchar[in[blk_ceiling]] << 2) |
             ((revchar[in[blk_ceiling + 1]] & 0x30) >> 4);
@@ -228,6 +258,7 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
             (revchar[in[blk_ceiling + 2]] >> 2);
     }
     out[len2] = '\0';
+    printf("%d\n", len2);
     printf("%s\n", out);
     return len2;
 }
