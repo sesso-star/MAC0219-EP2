@@ -14,7 +14,7 @@ base64_cu.o: base64.cu
 	nvcc -g -c base64.cu -o base64_cu.o
 
 base64.o: base64.c
-	gcc -c base64.c -o base64.o
+	gcc -g -c base64.c -o base64.o
 
 clean:
 	rm -f base64_test_cuda base64_test_seq *.o

@@ -8,6 +8,7 @@
 
 /*************************** HEADER FILES ***************************/
 #include <stdlib.h>
+#include <stdio.h>
 #include "base64.h"
 
 /****************************** MACROS ******************************/
@@ -129,7 +130,8 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len)
             out[idx + 1] = (revchar(in[idx2 + 1]) << 4) | (revchar(in[idx2 + 2]) >> 2);
             idx += 2;
         }
+        out[idx] = '\0';
     }
-
+    
     return(idx);
 }
