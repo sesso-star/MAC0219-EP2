@@ -35,12 +35,16 @@ int base64_test()
         pass = pass && ((buf_len == strlen(code[idx])) &&
                          (buf_len == base64_encode(text[idx], NULL, strlen(text[idx]), 1)));
         pass = pass && !strcmp(code[idx], buf);
+            
+        printf("Passed encode: %d\n", pass);
 
         memset(buf, 0, sizeof(buf));
         buf_len = base64_decode(code[idx], buf, strlen(code[idx]));
         pass = pass && ((buf_len == strlen(text[idx])) &&
                         (buf_len == base64_decode(code[idx], NULL, strlen(code[idx]))));
         pass = pass && !strcmp(text[idx], buf);
+        printf("Passed decode: %d\n", pass);
+
     }
 
     return(pass);
@@ -48,9 +52,9 @@ int base64_test()
 
 int main()
 {
-    /*BYTE buf[1024];*/
-    /*BYTE text[1024] = "foobar";*/
-    printf("Base64 tests: %s\n", base64_test() ? "PASSED" : "FAILED");
-    /*base64_encode(text, buf, strlen(text), 1);*/
+    BYTE buf[1024];
+    BYTE text[1024] = "Zm8=";
+    /*printf("Base64 tests: %s\n", base64_test() ? "PASSED" : "FAILED");*/
+    base64_decode(text, buf, strlen(text));
     return 0;
 }

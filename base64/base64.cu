@@ -85,7 +85,7 @@ extern "C"
 size_t base64_encode(const BYTE in[], BYTE out[], size_t len, 
         int newline_flag) {
     size_t blks, blk_ceiling, left_over, len2;
-    int blockSize = 256;
+    int block_size = 256;
     BYTE *cuda_in, *cuda_out, *cuda_charset;
 
     blks = (len / 3);
@@ -108,15 +108,12 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
     cudaMemcpy(cuda_in, in, len * sizeof(BYTE), 
             cudaMemcpyHostToDevice);
     checkCudaErr();
-    cudaMemcpy(cuda_out, out, len * sizeof(BYTE), 
-            cudaMemcpyHostToDevice);
-    checkCudaErr();
     cudaMemcpy(cuda_charset, charset, 64 * sizeof(BYTE), 
             cudaMemcpyHostToDevice);
     checkCudaErr();
 
     /* Process text from idx 0 to 3 * blks */
-    cuda_encode<<<blks / blockSize + 1, blockSize>>>
+    cuda_encode<<<blks / block_size + 1, block_size>>>
         (blks, cuda_in, cuda_charset, cuda_out, newline_flag);
     checkCudaErr();
     cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
@@ -146,49 +143,91 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
 }
 
 
+/*for (idx = 0, idx2 = 0; idx2 < blk_ceiling; idx += 3, idx2 += 4) {*/
+        /*if (in[idx2] == '\n')*/
+            /*idx2++;*/
+        /*out[idx] = (revchar[in[idx2]] << 2) | */
+            /*((revchar[in[idx2 + 1]] & 0x30) >> 4);*/
+        /*out[idx + 1] = (revchar[in[idx2 + 1]] << 4) |*/
+            /*(revchar[in[idx2 + 2]] >> 2);*/
+        /*out[idx + 2] = (revchar[in[idx2 + 2]] << 6) |*/
+            /*revchar[in[idx2 + 3]];*/
+/*}*/
+
+
+__global__
+void cuda_decode(size_t len, const BYTE *cuda_in, BYTE *cuda_out,
+        BYTE *cuda_revchar) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < len) {
+        int m = NEWLINE_INVL + 1;
+        int new_lines = i * 4 / m;
+        int i_in = i * 4;
+        int i_out = i * 3 - new_lines;
+        cuda_out[i_out++] = cuda_in[i_in++];
+    }
+}
+
+
 size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
-    size_t idx, idx2, blks, blk_ceiling, left_over;
+    size_t len2, idx, idx2, blks, blk_ceiling, left_over;
+    size_t no_newline_len, no_newline_leftover;
+    int i, newline_flag = 0;
+    int block_size = 256;
+    BYTE *revchar = (BYTE *) malloc(256 * sizeof(BYTE));
+    BYTE *cuda_revchar, *cuda_in, *cuda_out;
 
-    if (in[len - 1] == '=')
-        len--;
-    if (in[len - 1] == '=')
-        len--;
+    for (i = 0; i < 64; i++) 
+        revchar[charset[i]] = i;
 
+    /* Calculates output length */
+    if (in[len - 1] == '=') len--;
+    if (in[len - 1] == '=') len--;
+    if (len >= 77 && in[NEWLINE_INVL] == '\n')
+        no_newline_len = len - len / (NEWLINE_INVL + 1);
+    len2 = (no_newline_len / 4) * 3;
+    no_newline_leftover = no_newline_len % 4;
+    if (no_newline_leftover > 1)
+        len2 += no_newline_leftover - 1;
+
+    if (out == NULL)
+        return len2;
+ 
     blks = len / 4;
     left_over = len % 4;
+    
+    cudaMalloc(&cuda_in, sizeof(BYTE) * len);
+    checkCudaErr();
+    cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
+    checkCudaErr();
+    cudaMalloc(&cuda_revchar, sizeof(BYTE) * 256);
+    checkCudaErr();
+    cudaMemcpy(cuda_in, in, len * sizeof(BYTE),
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
+    cudaMemcpy(cuda_revchar, revchar, 256 * sizeof(BYTE), 
+            cudaMemcpyHostToDevice);
+    checkCudaErr();
 
-    if (out == NULL) {
-        if (len >= 77 && in[NEWLINE_INVL] == '\n')   // Verify that newlines where used.
-            len -= len / (NEWLINE_INVL + 1);
-        blks = len / 4;
-        left_over = len % 4;
-
-        idx = blks * 3;
-        if (left_over == 2)
-            idx ++;
-        else if (left_over == 3)
-            idx += 2;
+    blk_ceiling = blks * 4;
+    /* Process idx from 0 to 4 * blks */
+    cuda_decode<<<blks / block_size + 1, block_size>>>(len, cuda_in,
+            cuda_out, cuda_revchar);
+    checkCudaErr();
+    cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE), 
+            cudaMemcpyDeviceToHost);
+   
+    /* Process the remainder part */
+    if (left_over == 2) 
+        out[len2++] = (revchar[in[blk_ceiling]] << 2) |
+            ((revchar[in[blk_ceiling + 1]] & 0x30) >> 4);
+    else if (left_over == 3) {
+        out[len2++] = (revchar[in[blk_ceiling]] << 2) |
+            ((revchar[in[blk_ceiling + 1]] & 0x30) >> 4);
+        out[len2++] = (revchar[in[blk_ceiling + 1]] << 4) |
+            (revchar[in[blk_ceiling + 2]] >> 2);
     }
-    else {
-        blk_ceiling = blks * 4;
-        for (idx = 0, idx2 = 0; idx2 < blk_ceiling; idx += 3, idx2 += 4) {
-            if (in[idx2] == '\n')
-                idx2++;
-            out[idx]     = (revchar(in[idx2]) << 2) | ((revchar(in[idx2 + 1]) & 0x30) >> 4);
-            out[idx + 1] = (revchar(in[idx2 + 1]) << 4) | (revchar(in[idx2 + 2]) >> 2);
-            out[idx + 2] = (revchar(in[idx2 + 2]) << 6) | revchar(in[idx2 + 3]);
-        }
-
-        if (left_over == 2) {
-            out[idx]     = (revchar(in[idx2]) << 2) | ((revchar(in[idx2 + 1]) & 0x30) >> 4);
-            idx++;
-        }
-        else if (left_over == 3) {
-            out[idx]     = (revchar(in[idx2]) << 2) | ((revchar(in[idx2 + 1]) & 0x30) >> 4);
-            out[idx + 1] = (revchar(in[idx2 + 1]) << 4) | (revchar(in[idx2 + 2]) >> 2);
-            idx += 2;
-        }
-    }
-
-    return(idx);
+    out[len2] = '\0';
+    printf("%s\n", out);
+    return len2;
 }
