@@ -17,16 +17,11 @@ int mod(int a, int b)
 }
 
 
-char *cipher(char *input, char *key, int encipher)
+void cipher(char *input, char *output, char *key, int encipher)
 {
     int keyLen = strlen(key);
 
-    /*for (int i = 0; i < keyLen; ++i)*/
-        /*if (!isalpha(key[i]))*/
-            /*return ""; // Error*/
-
     int inputLen = strlen(input);
-    char *output = (char *)malloc(inputLen + 1);
     int nonAlphaCharCount = 0;
 
     for (int i = 0; i < inputLen; ++i)
@@ -35,8 +30,9 @@ char *cipher(char *input, char *key, int encipher)
         {
             int cIsUpper = isupper(input[i]);
             char offset = cIsUpper ? 'A' : 'a';
-            int keyIndex = (i - nonAlphaCharCount) % keyLen;
+            int keyIndex = i % keyLen;
             int k = (cIsUpper ? toupper(key[keyIndex]) : tolower(key[keyIndex])) - offset;
+
             k = encipher ? k : -k;
             char ch = (char)((mod(((input[i] + k) - offset), 26)) + offset);
             output[i] = ch;
@@ -44,26 +40,22 @@ char *cipher(char *input, char *key, int encipher)
         else
         {
             output[i] = input[i];
-            ++nonAlphaCharCount;
         }
     }
 
     output[inputLen] = '\0';
-    return output;
 }
 
 
 int encipher(char *input, char *output, char *key)
 {
-    output = cipher(input, key, 1);
-    printf ("%s\n", output);
+    cipher(input, output, key, 1);
     return strlen(output);
 }
 
 
 int decipher(char *input, char *output, char *key)
 {
-    output = cipher(input, key, 0);
-    printf ("%s\n", output);
+    cipher(input, output, key, 0);
     return strlen(output);
 }        
