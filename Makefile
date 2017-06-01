@@ -21,6 +21,8 @@ vigenere: $(BIN_DIR)/vigenere_test_cuda
 
 rot13: $(BIN_DIR)/rot13_test_cuda
 
+rot13_test_seq: $(BIN_DIR)/rot13_test_seq
+
 $(BIN_DIR)/base64_test_cuda: $(OBJ_DIR)/base64_test.o $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/cudaUtils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
 	# scp $(B64_DIR)/base64_test_cuda $(SERVER)
@@ -85,4 +87,5 @@ $(OBJ_DIR)/utils.o: $(UTILS_DIR)/utils.c
 
 clean:
 	rm -f $(BIN_DIR)/base64_test_cuda $(BIN_DIR)/base64_test_seq $(OBJ_DIR)/*.o \
-		  $(BIN_DIR)/vigenere_test_cuda $(BIN_DIR)/vigenere_test_seq
+		  $(BIN_DIR)/vigenere_test_cuda $(BIN_DIR)/vigenere_test_seq \
+		  $(BIN_DIR)/rot13_test_cuda $(BIN_DIR)/rot13_test_seq

@@ -50,13 +50,25 @@ void testWithFile(char* filename) {
    printf("Done\n");
 }
 
+void testFileTime(char* filename) {
+   char* h_text = NULL;
+
+   printf("Reading file: %s\n", filename);
+   int numElements = readTextFile(filename, &h_text);
+
+   rot13(h_text);
+
+   printf("Done\n");
+}
+
 int main(int argc, char* argv[]) {
    char* filename = argv[1];
    sscanf(argv[2], "%d", &nWarps);
 
    printf("Will start test\n");
-   testWithFile(filename);
-   testWithString();
+   // testWithFile(filename);
+   // testWithString();
+   testFileTime(filename);
 
    return 0;
 }
