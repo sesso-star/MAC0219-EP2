@@ -1,0 +1,30 @@
+CRIAR BIBLIAS:
+    O script generate_bibles.sh recebe um argumento (nome de um arquivo) e
+    cria copias dele com versões de até 16 vezes o tamanho original em uma
+    escala exponencial com base 2. Por exemplo: o comando
+
+        > ./generate_bibles.sh bible.txt
+
+    ira gerar os arquivos:
+        1bible.txt
+        2bible.txt
+        4bible.txt
+        8bible.txt
+        16bible.txt
+
+FAZER TESTES:
+    O script test.sh recebe um argumento (um programa) que será rodado com
+    biblias de 1, 2, 4 e 8 vezes o tamanho de uma biblia. Ele irá procurar por
+    arquivos de biblias com nome Nbible.txt.
+    Os resultados são colocados em uma pasta com um timestamp dentro do
+    diretório results
+    Exemplo:
+    > ./test.sh ../bin/rot13_test_cuda
+
+PLOTAR GRÁFICOS
+    O script gen_graph.py deve ser rodado com python3. Ele recebe dois
+    argumentos. O primeiro é o diretório de resultados de um teste feito
+    usando um progrrama paralelo e o segundo utilizando um programa sequencial.
+    Exemplo:
+    > python3 gen_graph.py results/trial-2017-06-01:15:45:28
+    results/trial-2017-06-01:16:15:21

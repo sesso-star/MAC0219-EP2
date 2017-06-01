@@ -197,7 +197,6 @@ class Plotter:
 
         self.show("compare_timeXsize_" + self.algorithm + self.comment)
 
-
 if __name__ == '__main__':
     argv = sys.argv
     plot = Plotter()
