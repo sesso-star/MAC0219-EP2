@@ -10,19 +10,8 @@
 *********************************************************************/
 
 extern "C" {
-#include "vigenere.h"
+#include "vigenere_cu.h"
 }
-
-
-void check_cuda_error() 
-{
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        printf("Erro na chamada cuda: ");
-        printf("%s\n", cudaGetErrorString(err));
-    }
-}
-
 
 __device__
 int mod(int a, int b)
@@ -106,24 +95,24 @@ void cipher(char *input, char *output, char *key, int encipher)
     int block_size = 256;
     
     cudaMalloc(&cuda_in, sizeof(char) * len);
-    check_cuda_error();
+    checkCudaErr();
     cudaMalloc(&cuda_out, sizeof(char) * len);
-    check_cuda_error();
+    checkCudaErr();
     cudaMalloc(&cuda_key, sizeof(char) * key_len);
-    check_cuda_error();
+    checkCudaErr();
     cudaMemcpy(cuda_in, input, len * sizeof(char),
             cudaMemcpyHostToDevice);
-    check_cuda_error();
+    checkCudaErr();
     cudaMemcpy(cuda_key, key, key_len * sizeof(char),
             cudaMemcpyHostToDevice);
-    check_cuda_error();
+    checkCudaErr();
 
     cipher<<<len / block_size + 1, block_size>>> 
         (cuda_in, cuda_out, cuda_key, encipher, len, key_len);
-    check_cuda_error();
+    checkCudaErr();
     cudaMemcpy(output, cuda_out, len * sizeof(char), 
             cudaMemcpyDeviceToHost);
-    check_cuda_error();
+    checkCudaErr();
 
     output[len] = '\0';
     cudaFree(cuda_in);

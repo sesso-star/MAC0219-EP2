@@ -7,12 +7,13 @@
 * Details:    Defines the API for the corresponding Base64 implementati
 *             on.
 *********************************************************************/
-#ifndef BASE64_H
-#define BASE64_H
+#ifndef BASE64_CU_H
+#define BASE64_CU_H
 
 
 #include <stddef.h>
-
+#include <stdlib.h>
+#include "../utils/cudaUtils.h"
 
 typedef unsigned char BYTE;             // 8-bit byte
 
@@ -29,4 +30,4 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len);
 
 
 
-#endif   // BASE64_H
+#endif   // BASE64_CU_H

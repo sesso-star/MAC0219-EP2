@@ -12,12 +12,9 @@
 #ifndef VIGENERE_H
 #define VIGENERE_H
 
-#include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
-#include <stdio.h>
-
 
 // Given a key and a string input, ciphers the input
 //

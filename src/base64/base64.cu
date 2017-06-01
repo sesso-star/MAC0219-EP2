@@ -6,11 +6,8 @@
 * Details:    Implementation of the Base64 encoding algorithm.
 *********************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-
 extern "C" {
-    #include "base64.h"
+    #include "base64_cu.h"
 }
 
 #define NEWLINE_INVL 76
@@ -20,16 +17,6 @@ extern "C" {
 // and '/' with '*' and '-'
 static const BYTE charset[] = 
     {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
-
-
-void checkCudaErr() {
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        printf("Erro na chamada cuda: ");
-        printf("%s\n", cudaGetErrorString(err));
-    }
-}
-
 
 BYTE revchar(char ch)
 {
