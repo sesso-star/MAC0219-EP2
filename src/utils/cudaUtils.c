@@ -1,4 +1,4 @@
-#import "cudaUtils.h"
+#include "cudaUtils.h"
 
 void checkCudaErr() {
     cudaError_t err = cudaGetLastError();
