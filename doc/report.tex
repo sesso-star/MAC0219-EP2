@@ -1,0 +1,109 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper,margin=1in,footskip=0.25in]{geometry} % set margins
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref} 
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}    % needed for include graphics
+\usepackage{subfigure}   % add subfigures
+\usepackage{indentfirst}
+\usepackage{float}       % needed for [H] figure placement option
+\usepackage{setspace}    % needed for doublespacing
+\usepackage{tikz}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
+% Macros
+\renewcommand{\familydefault}{\sfdefault} % sans-serif
+\newcommand{\lowtext}[1]{$_{\text{#1}}$}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% Adds ./img/ to the path of figures
+\graphicspath{{./img/}}
+
+\title{Relatório EP2 - MAC0219}
+\author{Bruno Sesso, Gustavo Estrela de Matos}
+
+\begin{document}
+% Espaçamento duplo 
+\doublespacing
+\begin{titlepage}
+    \vfill
+    \begin{center}
+        \vspace{0.5\textheight}
+        \noindent
+        Instituto de Matemática e Estatística \\
+        EP1 - MAC0219 \\
+        \vfill
+        \noindent
+        {\Large Implementação de Algoritmos de Criptografia Paralelos
+            Usando CUDA} \\
+        \bigskip
+        \bigskip
+        \begin{tabular}{ll}
+            {\bf Professor:} & {Alfredo Goldman} \\
+            {\bf Alunos:}    & {Bruno Sesso} \\
+                             & {Gustavo Estrela de Matos} \\
+        \end{tabular} \\
+        \vspace{\fill}
+       \bigskip
+        São Paulo, \today \\
+       \bigskip
+    \end{center}
+\end{titlepage}
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
+
+%%%%%%%%%%%%%%%%%%%%% INTRODUÇÃO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Introdução}
+        
+
+%%%%%%%%%%%%%%%%%%%%% SEQUENCIAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Código Sequencial}
+
+%%%%%%%%%%%%%%%%%%%%% CUDA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Código em CUDA}
+
+%%%%%%%%%%%%%%%%%%%%% DISCUSSÃO DOS RESULTADOS %%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Discussão dos Resultados}
+
+%%%%%%%%%%%%%%%%%%%%% CONCLUSAO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Conclusão}
+
+\end{document}
