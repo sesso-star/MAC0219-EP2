@@ -64,8 +64,8 @@
         EP1 - MAC0219 \\
         \vfill
         \noindent
-        {\Large Implementação de Algoritmos de Criptografia Paralelos
-            Usando CUDA} \\
+        {\Large Implementação de Algoritmos de Criptografia e Codificação
+                Paralelos Usando CUDA} \\
         \bigskip
         \bigskip
         \begin{tabular}{ll}
@@ -88,19 +88,57 @@
 %%%%%%%%%%%%%%%%%%%%% INTRODUÇÃO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Introdução}
-        
+Este trabalho tem como objetivo a paralelização e análise de desempenho
+de algoritmos de criptografia e codificação para serem rodados em GPUs.
+O código desenvolvido utilizará a biblioteca \emph{Compute Unified 
+Device Architecture} (CUDA), e portanto será compatível apenas com GPUs 
+NVIDIA.
 
-%%%%%%%%%%%%%%%%%%%%% SEQUENCIAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Pensando na arquitetura \emph{multiple instruction single data} (MISD), 
+escolhemos três algoritmos em que os dados não possuem grandes 
+dependência entre si, e portanto podem ser separados mais facilmente 
+para serem processados em paralelo. Os três algoritmos escolhidos foram:
+\begin{itemize}
+    \item{\textbf{Base64}}: um algoritmo de codificação;
+    \item{\textbf{Rot13}}: também um algoritmo de codificação;
+    \item{\textbf{Vigenere}}: um algoritmo de cifração.
+\end{itemize}
+        
+Para analisar a paralelização dos algoritmos a nossa principal métrica
+foi o tempo de execução ao processar arquivos de texto. Os três 
+algoritmos escolhidos não tem grandes dependências ao conteúdo lido, 
+portanto escolhemos arbitrariamente uma versão em texto puro da bíblia
+para medir tempos de execução. Para garantir significância estatística
+utilizamos o programa \emph{perf}, que nos permite apresentar resultados
+médios de rodadas do algoritmo.
+
+% todo: falar onde a gente rodou as paradas. Qual as configs da placa?
+O computador usado nos testes...
+
+%%%%%%%%%%%%%%%%%%%%% ALGORITMOS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% aqui a gente explica os algoritmos que a gente escolheu e mostra
+% como a versão sequencial deles funciona
 \newpage
-\section{Código Sequencial}
+\section{Algoritmos Escolhidos}
+\subsection{Base64}
+\subsection{Rot13}
+\subsection{Vigenere}
+% todo: explicar que mudou o algoritmo
+
 
 %%%%%%%%%%%%%%%%%%%%% CUDA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% aqui a gente mostra como paraleliza os algoritmos
 \newpage
-\section{Código em CUDA}
+\section{Código Paralelo}
+\subsection{Base64}
+\subsection{Rot13}
+\subsection{Vigenere}
+
 
 %%%%%%%%%%%%%%%%%%%%% DISCUSSÃO DOS RESULTADOS %%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Discussão dos Resultados}
+
 
 %%%%%%%%%%%%%%%%%%%%% CONCLUSAO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
