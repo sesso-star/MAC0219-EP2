@@ -12,6 +12,7 @@ B64_DIR=src/base64
 UTILS_DIR=src/utils
 VIG_DIR=src/vigenere
 ROT13_DIR=src/rot13
+READ_TEST_DIR=src/readTest
 
 all: base64 vigenere rot13
 
@@ -22,6 +23,9 @@ vigenere: $(BIN_DIR)/vigenere_test_cuda
 rot13: $(BIN_DIR)/rot13_test_cuda
 
 rot13_test_seq: $(BIN_DIR)/rot13_test_seq
+
+read_test: $(BIN_DIR)/read_test
+
 
 $(BIN_DIR)/base64_test_cuda: $(OBJ_DIR)/base64_test.o $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/cudaUtils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
@@ -75,8 +79,11 @@ $(OBJ_DIR)/rot13.o: $(ROT13_DIR)/rot13.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
+$(BIN_DIR)/read_test: $(OBJ_DIR)/read_test.o $(OBJ_DIR)/utils.o
+	$(CC) $(CFLAGS) $^ -o $@
 
-
+$(OBJ_DIR)/read_test.o: $(READ_TEST_DIR)/read_test.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 
 $(OBJ_DIR)/cudaUtils.o: $(UTILS_DIR)/cudaUtils.c
