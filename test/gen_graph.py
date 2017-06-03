@@ -197,15 +197,63 @@ class Plotter:
 
         self.show("compare_timeXsize_" + self.algorithm + self.comment)
 
+    def compare_read(self, results, range1, results2, range2, results3, range3, nColors=10, group1="group 1", group2="group 2", group3="group 3"):
+        label1 = group1
+        label2 = group2
+        label3 = group3
+
+
+        self.init_data_vectors(threads_range=range1)
+        ylists = self.get_timeXsize_lists(results)
+        self.reset_colors(3)
+
+        legend_handles = []
+        legends = []
+
+        for nWarps, ylist in ylists.items():
+            th_legend = self.plot(self.sizes, ylist)
+
+            legend_handles.append(th_legend)
+            legends.append("parallel (" + str(nWarps) + " x 32 threads)")
+
+        self.init_data_vectors(threads_range=range2)
+        ylists2 = self.get_timeXsize_lists(results2)
+        for nWarps, ylist in ylists2.items():
+            th_legend = self.plot(self.sizes, ylist, marker="s")
+
+            legend_handles.append(th_legend)
+            legends.append("sequential")
+
+        self.init_data_vectors(threads_range=range3)
+        ylists3 = self.get_timeXsize_lists(results3)
+        for nWarps, ylist in ylists3.items():
+            th_legend = self.plot(self.sizes, ylist, marker="s")
+
+            legend_handles.append(th_legend)
+            legends.append("Read operation")
+
+        ### Legends ###
+        self.legend_artist = self.ax.legend(legend_handles, legends)
+
+        plt.title('Comparision of time of execution X size of input (' + self.algorithm + " " + self.comment + ")")
+        plt.ylabel('Time (s)')
+        plt.xlabel('x Size of Bible (4452070 chars)')
+
+        my_xticks = self.sizes
+        plt.xticks(self.sizes, my_xticks)
+
+        self.show("compare_read_" + self.algorithm + self.comment)
+
 if __name__ == '__main__':
     argv = sys.argv
     plot = Plotter()
     plot.algorithm = "Rot-13"
 
-    plot.comment = " - Parallel"
     parallel_results = parse_parallel_results(sys.argv[1])
     sequential_results = parse_sequential_results(argv[2])
+    read_results = parse_sequential_results(argv[3])
 
+    plot.comment = " - Parallel"
     plot.timeXsize(parallel_results)
     plot.timeXthread(parallel_results)
 
@@ -215,3 +263,6 @@ if __name__ == '__main__':
 
     plot.comment = " - Parallel vs Sequential"
     plot.compare_timeXsize(parallel_results, range(32,33), sequential_results, range(1, 2), group1="Parallel", group2="Sequential")
+
+    plot.comment = " - Comparision with read operation"
+    plot.compare_read(parallel_results, range(32,33), sequential_results, range(1, 2), read_results, range(1, 2), group1="Parallel", group2="Sequential", group3="Read Operation")
