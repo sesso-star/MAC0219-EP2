@@ -7,7 +7,7 @@
 /*************************** HEADER FILES ***************************/
 #include <stdio.h>
 #include <memory.h>
-#include "vigenere_cu.h"
+#include "vigenere.h"
 #include "../utils/utils.h"
 
 int nWarps;
@@ -24,8 +24,5 @@ int main(int argc, char *argv[])
     }
     char *filename = argv[1];
     sscanf(argv[2], "%d", &nWarps);
-
-    printf("Vigenere tests: %s\n", vigenere_test() ? 
-            "PASSED" : "FAILED");
     return 0;
 }

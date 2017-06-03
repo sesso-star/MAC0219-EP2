@@ -14,7 +14,7 @@
 /*************************** HEADER FILES ***************************/
 #include <stdio.h>
 #include <memory.h>
-#include "base64_cu.h"
+#include "base64.h"
 #include "../utils/utils.h"
 
 int nWarps;

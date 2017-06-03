@@ -34,13 +34,13 @@ $(BIN_DIR)/unit_test_seq: $(UNIT_TEST_DIR)/unit_test.c $(OBJ_DIR)/base64.o $(OBJ
 
 $(BIN_DIR)/unit_test_cuda: $(UNIT_TEST_DIR)/unit_test.c $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/vigenere_cu.o $(OBJ_DIR)/rot13_cu.o $(OBJ_DIR)/utils.o $(OBJ_DIR)/cudaUtils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
-	scp $@ $(SERVER)
+	#scp $@ $(SERVER)
 
 
 
 $(BIN_DIR)/base64_test_cuda: $(OBJ_DIR)/base64_test.o $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/cudaUtils.o $(OBJ_DIR)/utils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
-	scp $@ $(SERVER)
+	#scp $@ $(SERVER)
 
 $(BIN_DIR)/base64_test_seq: $(OBJ_DIR)/base64_test.o $(OBJ_DIR)/base64.o $(OBJ_DIR)/utils.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -58,7 +58,7 @@ $(OBJ_DIR)/base64.o: $(B64_DIR)/base64.c
 
 $(BIN_DIR)/vigenere_test_cuda: $(OBJ_DIR)/vigenere_test.o $(OBJ_DIR)/vigenere_cu.o $(OBJ_DIR)/cudaUtils.o $(OBJ_DIR)/utils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
-	scp $@ $(SERVER)
+	#scp $@ $(SERVER)
 
 $(BIN_DIR)/vigenere_test_seq: $(OBJ_DIR)/vigenere_test.o $(OBJ_DIR)/vigenere.o $(OBJ_DIR)/utils.o
 	$(CC) $(CFLAGS) $^ -o $@
