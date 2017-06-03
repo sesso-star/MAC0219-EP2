@@ -12,8 +12,9 @@ B64_DIR=src/base64
 UTILS_DIR=src/utils
 VIG_DIR=src/vigenere
 ROT13_DIR=src/rot13
+UNIT_TEST_DIR=src/unit_test
 
-all: base64 vigenere rot13
+all: base64 vigenere rot13 unit_test
 
 base64: $(BIN_DIR)/base64_test_cuda
 
@@ -22,6 +23,20 @@ vigenere: $(BIN_DIR)/vigenere_test_cuda
 rot13: $(BIN_DIR)/rot13_test_cuda
 
 rot13_test_seq: $(BIN_DIR)/rot13_test_seq
+
+unit_test_seq: $(BIN_DIR)/unit_test_seq
+
+unit_test_cuda: $(BIN_DIR)/unit_test_cuda
+
+
+$(BIN_DIR)/unit_test_seq: $(UNIT_TEST_DIR)/unit_test.c $(OBJ_DIR)/base64.o $(OBJ_DIR)/vigenere.o $(OBJ_DIR)/rot13.o $(OBJ_DIR)/utils.o
+	$(CC) $(NVCCFLAGS) $^ -o $@
+
+$(BIN_DIR)/unit_test_cuda: $(UNIT_TEST_DIR)/unit_test.c $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/vigenere_cu.o $(OBJ_DIR)/rot13_cu.o $(OBJ_DIR)/utils.o $(OBJ_DIR)/cudaUtils.o
+	nvcc $(NVCCFLAGS) $^ -o $@
+	scp $@ $(SERVER)
+
+
 
 $(BIN_DIR)/base64_test_cuda: $(OBJ_DIR)/base64_test.o $(OBJ_DIR)/base64_cu.o $(OBJ_DIR)/cudaUtils.o $(OBJ_DIR)/utils.o
 	nvcc $(NVCCFLAGS) $^ -o $@
@@ -76,16 +91,16 @@ $(OBJ_DIR)/rot13.o: $(ROT13_DIR)/rot13.c
 
 
 
-
-
-
 $(OBJ_DIR)/cudaUtils.o: $(UTILS_DIR)/cudaUtils.c
 	nvcc $(NVCCFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/utils.o: $(UTILS_DIR)/utils.c
 	nvcc $(NVCCFLAGS) -c $< -o $@
 
+
 clean:
-	rm -f $(BIN_DIR)/base64_test_cuda $(BIN_DIR)/base64_test_seq $(OBJ_DIR)/*.o \
-		  $(BIN_DIR)/vigenere_test_cuda $(BIN_DIR)/vigenere_test_seq \
-		  $(BIN_DIR)/rot13_test_cuda $(BIN_DIR)/rot13_test_seq
+	rm -f $(BIN_DIR)/base64_test_cuda $(BIN_DIR)/base64_test_seq \
+		$(OBJ_DIR)/*.o $(BIN_DIR)/vigenere_test_cuda \
+		$(BIN_DIR)/vigenere_test_seq \
+		$(BIN_DIR)/rot13_test_cuda $(BIN_DIR)/rot13_test_seq \
+	   	$(BIN_DIR)/unit_test_seq $(BIN_DIR)/unit_test_cuda
