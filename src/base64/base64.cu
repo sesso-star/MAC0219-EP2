@@ -157,7 +157,7 @@ void cuda_decode(size_t len, const BYTE *cuda_in, BYTE *cuda_out,
         int i_in = next_in_idx(cuda_in, i * 4 + new_lines - 1);
         int i_out = i * 3;
         int a, b;
-
+        
         a = cuda_revchar[cuda_in[i_in]] << 2; 
         i_in = next_in_idx(cuda_in, i_in);
         b = (cuda_revchar[cuda_in[i_in]] & 0x30) >> 4;
@@ -183,13 +183,14 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     int cuda_block_size = nWarps * 32;
     int cuda_blocks;
     BYTE *revchar = (BYTE *) malloc(256 * sizeof(BYTE));
-
     BYTE *cuda_revchar, *cuda_in, *cuda_out;
 
-    for (i = 0; i < 256; i++)
-        revchar[i] = 'A';
     for (i = 0; i < 64; i++)
         revchar[charset[i]] = i;
+    
+    cudaMalloc(&cuda_in, sizeof(BYTE) * len);
+    checkCudaErr();
+
     
     /* Calculates output length */
     if (in[len - 1] == '=') len--;
@@ -205,12 +206,16 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     
     if (out == NULL) 
         return len2;
- 
+    
     blks = len / 4;
     left_over = len % 4;
-    cudaMalloc(&cuda_in, sizeof(BYTE) * len);
-    checkCudaErr();
-    cudaMalloc(&cuda_out, sizeof(BYTE) * len2);
+    blk_ceiling = blks * 4;
+    if (newline_flag)
+        len2 = 3 * (blk_ceiling - blk_ceiling / (NEWLINE_INVL + 1)) / 4;
+    else
+        len2 = 3 * blks;
+    
+    cudaMalloc(&cuda_out, sizeof(BYTE) * blks * 3);
     checkCudaErr();
     cudaMalloc(&cuda_revchar, sizeof(BYTE) * 256);
     checkCudaErr();
@@ -220,25 +225,19 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     cudaMemcpy(cuda_revchar, revchar, 256 * sizeof(BYTE), 
             cudaMemcpyHostToDevice);
     checkCudaErr();
-
+    
     /* Process idx from 0 to 4 * blks */
     cuda_blocks = (blks + cuda_block_size - 1) / cuda_block_size;
-    if (blks > 0)
+    if (blks > 0) {
         cuda_decode<<<cuda_blocks, cuda_block_size>>>(blks,
             cuda_in, cuda_out, cuda_revchar);
-    checkCudaErr();
-    cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
+        checkCudaErr();
+        cudaMemcpy(out, cuda_out, 3 * blks * sizeof(BYTE),
             cudaMemcpyDeviceToHost);
-    checkCudaErr();
+        checkCudaErr();
+    }
 
     /* Process the remainder part */
-    blk_ceiling = blks * 4;
-    if (newline_flag)
-        len2 = 3 * (blk_ceiling - blk_ceiling / (NEWLINE_INVL + 1)) / 4;
-    else
-        len2 = 3 * blks;
-
-
     if (left_over == 2) 
         out[len2++] = (revchar[in[blk_ceiling]] << 2) |
             ((revchar[in[blk_ceiling + 1]] & 0x30) >> 4);

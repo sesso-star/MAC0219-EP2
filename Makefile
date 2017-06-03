@@ -6,7 +6,7 @@ OBJ_DIR=obj
 BIN_DIR=bin
 
 CFLAGS=-O0 -g
-NVCCFLAGS=-Wno-deprecated-gpu-targets
+NVCCFLAGS=-Wno-deprecated-gpu-targets -g
 
 B64_DIR=src/base64
 UTILS_DIR=src/utils
@@ -18,7 +18,11 @@ all: base64 vigenere rot13 unit_test
 
 base64: $(BIN_DIR)/base64_test_cuda
 
+base64_test_seq: $(BIN_DIR)/base64_test_seq
+
 vigenere: $(BIN_DIR)/vigenere_test_cuda
+
+vigenere_test_seq: $(BIN_DIR)/vigenere_test_seq
 
 rot13: $(BIN_DIR)/rot13_test_cuda
 
@@ -26,7 +30,7 @@ rot13_test_seq: $(BIN_DIR)/rot13_test_seq
 
 unit_test_seq: $(BIN_DIR)/unit_test_seq
 
-unit_test_cuda: $(BIN_DIR)/unit_test_cuda
+unit_test: $(BIN_DIR)/unit_test_cuda
 
 
 $(BIN_DIR)/unit_test_seq: $(UNIT_TEST_DIR)/unit_test.c $(OBJ_DIR)/base64.o $(OBJ_DIR)/vigenere.o $(OBJ_DIR)/rot13.o $(OBJ_DIR)/utils.o
