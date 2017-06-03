@@ -2,9 +2,9 @@
 #define CUDA_UTILS_H
 
 /*************************** HEADER FILES ***************************/
+#include <cuda_runtime.h>
 #include <stddef.h>
 #include <stdio.h>
-// #include <cuda_runtime.h>
 
 /*********************** FUNCTION DECLARATIONS **********************/
 void checkCudaErr();
