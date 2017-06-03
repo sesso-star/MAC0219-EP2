@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include "../utils/cudaUtils.h"
+#include "../utils/utils.h"
 
 
 // Given a key and a string input, ciphers the input

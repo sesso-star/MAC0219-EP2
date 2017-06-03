@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef CUDA_UTILS_H
+#define CUDA_UTILS_H
 
 /*************************** HEADER FILES ***************************/
 #include <stddef.h>

@@ -92,7 +92,8 @@ void cipher(char *input, char *output, char *key, int encipher)
     char *cuda_in, *cuda_out, *cuda_key;
     int key_len = strlen(key);
     int len = strlen(input);
-    int block_size = 256;
+    int cuda_block_size = nWarps * 32;
+    int cuda_blocks;
     
     cudaMalloc(&cuda_in, sizeof(char) * len);
     checkCudaErr();
@@ -107,7 +108,8 @@ void cipher(char *input, char *output, char *key, int encipher)
             cudaMemcpyHostToDevice);
     checkCudaErr();
 
-    cipher<<<len / block_size + 1, block_size>>> 
+    cuda_blocks = (len + cuda_block_size + 1) /  cuda_block_size;
+    cipher<<<cuda_blocks, cuda_block_size>>> 
         (cuda_in, cuda_out, cuda_key, encipher, len, key_len);
     checkCudaErr();
     cudaMemcpy(output, cuda_out, len * sizeof(char), 
