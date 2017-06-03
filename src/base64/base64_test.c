@@ -19,6 +19,17 @@
 
 int nWarps;
 
+
+// Just encodes a text using base64 algorithms
+void testFileTime(char *filename) {
+    char *text = NULL;
+    int len = readTextFile(filename, &text);
+    char *encoded_text = malloc(len * sizeof(char));
+    base64_encode((const BYTE *) text, (BYTE *) encoded_text, len, 0);
+    printf("Done\n");
+}
+
+
 /*********************** FUNCTION DEFINITIONS ***********************/
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -29,6 +40,6 @@ int main(int argc, char *argv[]) {
     sscanf(argv[2], "%d", &nWarps);
 
     printf ("Will start test\n");
-    printf("Base64 tests: %s\n", base64_test() ? "PASSED" : "FAILED");
+    testFileTime(filename);
     return 0;
 }
