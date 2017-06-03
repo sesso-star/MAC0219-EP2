@@ -33,7 +33,8 @@ void testFileTime(char *filename) {
 /*********************** FUNCTION DEFINITIONS ***********************/
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf ("Usage: base64_test <number of threads wanted / 32>");
+        printf ("Usage: base64_test <filename>\
+                <number of threads wanted / 32>");
         return -1;
     }
     char *filename = argv[1];
