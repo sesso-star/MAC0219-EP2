@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "../utils/cudaUtils.h"
+#include "../utils/utils.h"
 
 typedef unsigned char BYTE;             // 8-bit byte
 

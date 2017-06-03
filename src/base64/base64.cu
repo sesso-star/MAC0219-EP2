@@ -6,6 +6,7 @@
 * Details:    Implementation of the Base64 encoding algorithm.
 *********************************************************************/
 
+#include <cuda_runtime.h>
 extern "C" {
     #include "base64_cu.h"
 }
@@ -68,11 +69,12 @@ void cuda_encode(size_t len, const BYTE *cuda_in, BYTE *cuda_charset,
 }
 
 
-extern "C"
 size_t base64_encode(const BYTE in[], BYTE out[], size_t len, 
         int newline_flag) {
     size_t blks, blk_ceiling, left_over, len2;
-    int block_size = 256;
+    int cuda_block_size = nWarps * 32;
+    int cuda_blocks;
+
     BYTE *cuda_in, *cuda_out, *cuda_charset;
 
     blks = (len / 3);
@@ -100,12 +102,15 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len,
     checkCudaErr();
 
     /* Process text from idx 0 to 3 * blks */
-    cuda_encode<<<blks / block_size + 1, block_size>>>
-        (blks, cuda_in, cuda_charset, cuda_out, newline_flag);
+    cuda_blocks = (blks + cuda_block_size - 1) / cuda_block_size;
+    if (cuda_blocks > 0)
+        cuda_encode<<<cuda_blocks, cuda_block_size>>>
+            (blks, cuda_in, cuda_charset, cuda_out, newline_flag);
     checkCudaErr();
     cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
             cudaMemcpyDeviceToHost);
     checkCudaErr();
+
     /* Process the ramainder part */
     blk_ceiling = blks * 3;
     len2 = blks * 4; 
@@ -175,8 +180,10 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     size_t len2, blks, blk_ceiling, left_over;
     size_t no_newline_len, no_newline_leftover;
     int i, newline_flag;
-    int block_size = 256;
+    int cuda_block_size = nWarps * 32;
+    int cuda_blocks;
     BYTE *revchar = (BYTE *) malloc(256 * sizeof(BYTE));
+
     BYTE *cuda_revchar, *cuda_in, *cuda_out;
 
     for (i = 0; i < 256; i++)
@@ -215,12 +222,15 @@ size_t base64_decode(const BYTE in[], BYTE out[], size_t len) {
     checkCudaErr();
 
     /* Process idx from 0 to 4 * blks */
-    cuda_decode<<<blks / block_size + 1, block_size>>>(blks,
+    cuda_blocks = (blks + cuda_block_size - 1) / cuda_block_size;
+    if (blks > 0)
+        cuda_decode<<<cuda_blocks, cuda_block_size>>>(blks,
             cuda_in, cuda_out, cuda_revchar);
     checkCudaErr();
     cudaMemcpy(out, cuda_out, len2 * sizeof(BYTE),
             cudaMemcpyDeviceToHost);
     checkCudaErr();
+
     /* Process the remainder part */
     blk_ceiling = blks * 4;
     if (newline_flag)

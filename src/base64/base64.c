@@ -81,6 +81,7 @@ size_t base64_encode(const BYTE in[], BYTE out[], size_t len, int newline_flag)
             out[idx2 + 3] = '=';
             idx2 += 4;
         }
+        out[idx2] = '\0';
     }
 
     return(idx2);
