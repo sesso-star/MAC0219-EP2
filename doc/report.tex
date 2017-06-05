@@ -118,6 +118,7 @@ O computador utilizado para realizar os testes foi o \emph{terra}
 (terra.eclipse.ime.usp.br), que conta com uma GPU GeForce GTX 750,
 rodando CUDA 8.0, e 4 Multiprocessors de 128 CUDA cores cada. 
 
+
 %%%%%%%%%%%%%%%%%%%%% ALGORITMOS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Aqui a gente explica os algoritmos que a gente escolheu e mostra
 % como a versão sequencial deles funciona
@@ -154,11 +155,57 @@ uma versão do código que também codifica caracteres que são dígitos
 e espaços.
 
 
+%%%%%%%%%%%%%%%%%%%%% ARQUITETURA NVIDIA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Arquitetura CUDA}
+Antes de mostrarmos nossos experimentos precisamos entender um pouco da
+arquitetura CUDA. Os principais conceitos que usamos durante esse 
+trabalho foram de blocks, threads, streaming multiprocessors (SM), warps
+e cuda cores, e entender como eles se relacionam é fundamental para
+produzir um código que faça o melhor uso possível da GPU. Primeiro,
+devemos explicitar que o conceito de thread e bloco são divisões do 
+trabalho que são especificadas pela própria aplicação, enquanto que
+Streaming Multiprocessors e cuda cores são características físicas da
+placa de vídeo. 
 
-%%%%%%%%%%%%%%%%%%%%% EXPERIMENTO %%%%%%%%%%%%%%%%%%%%%%%%%
+Quando nossa aplicação "lança" um código para ser rodado na GPU, i.e um 
+kernel, cada block é associado a um SM e as threads de cada bloco
+são agrupadas em conjuntos de 32 threads, chamado de warp. O SM, por sua
+vez, escalona as warps dos blocks para serem processados. Chamamos uma
+warp escalonada de residente.
+
+Se quisermos maximizar o desempenho do um programa cuda paralelo devemos
+nos atentar a dois pontos principais: balanceamento de carga e 
+ocupação. O primeiro ponto não é uma preocupação real nesse trabalho, 
+porque o processamento dado ao texto nos três programas escolhidos é bem
+balanceado por natureza e existem poucos desvios no código, isto é, 
+o processamento é idêntico na maior parte da entrada. Por outro lado, a
+ocupação dos recursos da GPU é um assunto complexo que será rasamente
+abordado nesse trabalho.
+
+A ocupação dos recursos de um SM é a razão entre o número de warps sendo
+processadas e o número máximo de warps que um SM pode processar. É 
+difícil determinar o primeiro valor citado, porém podemos ao menos 
+garantir que estamos criando um número de threads que pode atingir o 
+número máximo de warps que o SM é capaz de processar. 
+
+A placa de vídeo que utilizamos, uma GTX 750 possui 4 Streaming 
+Multiprocessors, que possuem um limite de 64 warps cada, e também um 
+limite de 1024 threads por bloco. Como cada warp dessa arquitetura
+possui 32 threads, temos que para ocupar um SM precisamos criar pelo
+menos 2048 (64 * 32) threads, e como cada bloco pode ter no máximo 1024
+threads, precisamos também de 2 blocos. É importante notar também que a
+GPU processa, no melhor caso, warps inteiras, portanto é ideal que 
+usemos blocos com tamanhos múltiplos do tamanho do warp, garantindo que 
+não haverá warps que não utilizam todo poder do SM.
+
+Na próxima seção apresentamos os experimentos feitos e ao final 
+concluímos com a melhor divisão de trabalho que pudemos observar.
+
+
+%%%%%%%%%%%%%%%%%%%%% EXPERIMENTO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Aqui agente explica como fizemos os testes nossa metodologia, etc.. 
 % coisas que são compartilhadas pelos experimentos de todos os 
-% algorimtos
+% algoritmos
 \newpage
 \section{Os experimentos}
 Para cada um dos algoritmos analisados realizamos uma série de testes. 
@@ -199,18 +246,18 @@ Portanto esperamos que o tempo de um algoritmo sequencial seja linear
 para o tamanho do array de caracteres. Observamos tal comportamento no
 seguinte gráfico:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.65]{img/rot13_seqXpar/timeXsize_Rot-13 - Sequential.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.65]{img/rot13_seqXpar/timeXsize_Rot-13 - Sequential.png}}
+\end{figure}
 
 Apesar de 8 vezes o tamanho da bíblia (35.616.560 caracteres) ser um
 número bastante grande, até mesmo o algoritmo sequencial o realiza em
 apenas meio segundo. Esperamos que a implementação paralela, realize os
 cálculos pelo menos mais rápido que a implementação sequencial:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXsize_Rot-13 - Parallel.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXsize_Rot-13 - Parallel.png}}
+\end{figure}
 
 Como esse gráfico possui mais informações analisemos-o com mais cuidado.
 O eixo Y representa o tempo levado para o algoritmo ser executado.
@@ -234,9 +281,9 @@ inválidos, pois iriam requirir blocos demais. É interessante notar que
 para os valores adequados de warps por blocos o tempo de execução do
 programa é o mesmo:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXthread_Rot-13 - Parallel.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXthread_Rot-13 - Parallel.png}}
+\end{figure}
 
 Nesse gráfico o eixo Y representa o tempo de execução do programa
 enquanto o eixo X representa o número de threads por bloco. Para cada
@@ -249,9 +296,9 @@ aumentar.
 
 Faremos agora uma comparação entre a implementação sequencial e a paralela:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_timeXsize_Rot-13 - Parallel vs Sequential.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_timeXsize_Rot-13 - Parallel vs Sequential.png}}
+\end{figure}
 
 Como discutido anteriormente, como o tempo de execução independe do
 número de threads por bloco, escolhemos 32 x 32 threads, pois
@@ -269,9 +316,9 @@ sequencial. De fato, talvez a implementação paralela só cresça devido a
 operação de leitura de arquivo que ocorre sequencialmente para ambos os
 algoritmos. Comparemos com o seguinte gráfico:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
+\end{figure}
 
 Para gerar os dados dos pontos azuis, executamos um programa que somente
 lê um arquivo e o guarda em um vetor de caracteres. Essa é a mesma
@@ -284,6 +331,17 @@ do tamanho de entrada. É claro que isso se limita aos valores máximos
 de threads por bloco e de blocos por GPU. 
 
 \subsection{Vigenere}
+A primeira observação que fizemos é que o algoritmo sequencial tem 
+complexidade linear com o tamanho da entrada. Esse desempenho já era 
+esperado dado que ler o texto é feito linearmente assim como a 
+encriptação em si.
+
+\begin{center}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/vigenere_seqtime.png}}
+\end{figure}
+\end{center}
+
 
 
 %%%%%%%%%%%%%%%%%%%%% CONCLUSAO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
