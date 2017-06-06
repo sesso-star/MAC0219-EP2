@@ -200,7 +200,7 @@ class Plotter:
 if __name__ == '__main__':
     argv = sys.argv
     plot = Plotter()
-    plot.algorithm = "Rot-13"
+    plot.algorithm = "Vigenere"
 
     plot.comment = " - Parallel"
     parallel_results = parse_parallel_results(sys.argv[1])

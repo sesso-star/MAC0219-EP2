@@ -1,4 +1,4 @@
-SERVER=gestrela@shell.vision.ime.usp.br:~/nvidia
+SERVER=gestrela@terra.eclipse.ime.usp.br:~/gustavo/MAC0219-EP2/bin
 
 CC=gcc
 
