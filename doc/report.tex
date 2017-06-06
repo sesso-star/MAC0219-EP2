@@ -236,8 +236,14 @@ levado para a execução de cada é relacionado às operações de leitura.
 %%%%%%%%%%%%%%%%%%%%% DISCUSSÃO DOS RESULTADOS %%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Discussão dos Resultados}
+Nessa seção apresentamos os resultados obtidos em cada um dos três 
+algoritmos paralelizados. Como os três algoritmos fazem trabalhos 
+parecidos, de substituição de caracteres, os resultados são parecidos
+assim como as conclusões tomadas. Para evitar redundância, vamos 
+apresentar primeiro, com mais detalhe, os resultados do algoritmo Rot13
+e depois, de maneira menos detalhada, os resultados de Base64 e 
+Vigenere.
 
-\subsection{Base64}
 \subsection{Rot13}
 
 Primeiramente analisemos o tempo levado da implementação sequencial.
@@ -248,6 +254,7 @@ seguinte gráfico:
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{\includegraphics[scale=.65]{img/rot13_seqXpar/timeXsize_Rot-13 - Sequential.png}}
+    \caption{Tempo de execução do algoritmo Rot13 sequencial.}
 \end{figure}
 
 Apesar de 8 vezes o tamanho da bíblia (35.616.560 caracteres) ser um
@@ -257,6 +264,8 @@ cálculos pelo menos mais rápido que a implementação sequencial:
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXsize_Rot-13 - Parallel.png}}
+    \caption{Tempo de execução do algoritmo Rot13 paralelo variando o
+    tamanho de entrada.}
 \end{figure}
 
 Como esse gráfico possui mais informações analisemos-o com mais cuidado.
@@ -283,6 +292,8 @@ programa é o mesmo:
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXthread_Rot-13 - Parallel.png}}
+    \caption{Tempo de execução do algoritmo Rot13 paralelo variando o
+    tamanho do bloco.}
 \end{figure}
 
 Nesse gráfico o eixo Y representa o tempo de execução do programa
@@ -298,6 +309,8 @@ Faremos agora uma comparação entre a implementação sequencial e a paralela:
 
 \begin{figure}[H]
     \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_timeXsize_Rot-13 - Parallel vs Sequential.png}}
+    \caption{Comparação de tempo de execução do algoritmo Rot13 paralelo
+    e sequencial.}
 \end{figure}
 
 Como discutido anteriormente, como o tempo de execução independe do
@@ -317,7 +330,11 @@ operação de leitura de arquivo que ocorre sequencialmente para ambos os
 algoritmos. Comparemos com o seguinte gráfico:
 
 \begin{figure}[H]
-    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
+    \makebox[\textwidth][c]{
+        \includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
+    \caption{Comparação com tempo de execução com o tempo de 
+        leitura da entrada.}
+    \label{fig:read_operation_time}
 \end{figure}
 
 Para gerar os dados dos pontos azuis, executamos um programa que somente
@@ -332,15 +349,126 @@ de threads por bloco e de blocos por GPU.
 
 \subsection{Vigenere}
 A primeira observação que fizemos é que o algoritmo sequencial tem 
-complexidade linear com o tamanho da entrada. Esse desempenho já era 
+complexidade linear com o tamanho da entrada, como podemos ver na 
+figura \ref{fig:vigenere_seqtime}. Esse desempenho já era 
 esperado dado que ler o texto é feito linearmente assim como a 
 encriptação em si.
 
 \begin{center}
 \begin{figure}[H]
-    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/vigenere_seqtime.png}}
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/time_seq.png}}
+    \caption{Tempo de execução do algoritmo Vigenere sequencial.}
+    \label{fig:vigenere_seqtime} 
 \end{figure}
 \end{center}
+
+Assim como no algoritmo Rot13, percebemos que o tempo de execução não 
+aumenta muito conforme aumentamos o tamanho da entrada. Inclusive, como
+observamos na imagem \ref{fig:read_operation_time}, essa inclinação se 
+deve, em boa parte, pela operação de leitura de texto em arquivo.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/timexsize.png}}
+    \caption{Tempo de execução do algoritmo Vigenere paralelo variando o
+    tamanho de entrada. Note que os pontos que marcam abaixo de zero 
+    segundos se referem a instâncias do problema que não rodaram na GPU
+    por excederem limites como número máximo de blocos.}
+\end{figure}
+
+Novamente como no caso Rot13, quando aumentamos o número de threads por
+bloco o desempenho continua muito parecido.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/timexthread.png}}
+    \caption{Tempo de execução do algoritmo Vigenere paralelo variando o
+    tamanho do bloco. Note que os pontos que marcam abaixo de zero se
+    referem a instâncias do problema que não rodaram na GPU porque 
+    excedem limites como o número máximo de blocos.}
+\end{figure}
+
+
+Quando comparamos as versões paralelas e sequenciais do programa, 
+percebemos que para as entradas maiores o algoritmo paralelo é melhor do
+que o algoritmo sequencial. Isto é, quando aumentamos a quantidade de 
+computação necessária, o overhead da estrutura de paralelismo é pago
+pelos ganhos em velocidade dos cálculos.
+
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/vigenere/parallelxseq.png}}
+    \caption{Comparação de tempo de execução do algoritmo Vigenere
+    paralelo e sequencial.}
+\end{figure}
+
+
+\subsection{Base64}
+A implementação sequencial do algoritmo Base64 mostrou, como esperado
+um comportamento linear conforme o tamanho da entrada.
+
+\begin{center}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/base64/time_seq.png}}
+    \caption{Tempo de execução do algoritmo Base64 sequencial.}
+    \label{fig:vigenere_seqtime} 
+    %todo: fix this image
+\end{figure}
+\end{center}
+
+Assim como no algoritmo Rot13 e Vigenere, percebemos que o tempo
+de execução não aumenta muito conforme aumentamos o tamanho da entrada. 
+Inclusive, como observamos na imagem \ref{fig:read_operation_time}, 
+essa inclinação se deve, em boa parte, pela operação de leitura de texto
+em arquivo.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/base64/timexsize.png}}
+    \caption{Tempo de execução do algoritmo Base64 paralelo variando o
+    tamanho de entrada. Note que os pontos que marcam abaixo de zero 
+    segundos se referem a instâncias do problema que não rodaram na GPU
+    por excederem limites como número máximo de blocos.}
+\end{figure}
+
+Novamente, assim como nos algoritmos Rot13 e Vigenere, quando aumentamos
+o número de threads por bloco o desempenho continua muito parecido.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.45]{img/base64/timexthread.png}}
+    \caption{Tempo de execução do algoritmo Base64 paralelo variando o
+    tamanho do bloco. Note que os pontos que marcam abaixo de zero se
+    referem a instâncias do problema que não rodaram na GPU porque 
+    excedem limites como o número máximo de blocos.}
+\end{figure}
+
+Porém, quando comparamos o Base64 paralelo com o sequêncial, observamos
+que a implementação sequencial teve desempenho melhor do que a versão
+paralela, diferente dos outros algoritmos. Concluimos que isso aconteceu
+simplismente porque o algoritmo Base64 é mais eficiente do que Vigenere 
+e Rot13. Enquanto os dois últimos algoritmos possuem três condicionais, 
+Base64 possui apenas um condicional que por sua vez é verdadeiro com 
+probabilidade baixa ($p = \frac{1}{77}$, refere-se à quebras de linhas a
+cada 77 caracteres no texto codificado) e portanto não afeta muito o 
+desempenho por conta de branching prediction.
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.4]{img/base64/parallelxseq.png}}
+    \caption{Comparação entre implementações sequenciais e paralelas de
+        Base64. Apesar do algoritmo sequencial ser mais rápido, é 
+        possível notar que a versão paralela escala melhor no tamanho da
+        instância, sugerindo que, para biblias maiores, o overhead de
+        paralelismo seja compensado, tornando a implementação paralela
+        a mais rápida.}
+    \label{fig:base64_parallelseq}
+\end{figure}
+
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.4]{seq_perf.png}}
+    \caption{Log do programa perf quando rodamos os três algoritmos 
+    sequenciais implementados. É possível ver que o algoritmo Base64 é 
+    rápido, fazendo com que o paralelismo só seja vantajoso com 
+    instâncias maiores, quando comparamos com Vigenere e Rot13.}
+    \label{fig:base64_seq_perf}
+\end{figure}
+
 
 
 

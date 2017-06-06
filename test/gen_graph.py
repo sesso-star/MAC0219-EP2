@@ -33,7 +33,7 @@ def parse_results(results_dir, warp_range, size_range):
                     results[nWarps][size]["avg"] = avg
                     results[nWarps][size]["std_dev"] = std_dev
 
-                match = re.search('Failed to launch rot13 kernel', line)
+                match = re.search('Cuda error', line)
                 if match:
                     results[nWarps][size]["avg"] = -0.007777
                     results[nWarps][size]["std_dev"] = 0
@@ -200,7 +200,7 @@ class Plotter:
 if __name__ == '__main__':
     argv = sys.argv
     plot = Plotter()
-    plot.algorithm = "Vigenere"
+    plot.algorithm = "Base64"
 
     plot.comment = " - Parallel"
     parallel_results = parse_parallel_results(sys.argv[1])
