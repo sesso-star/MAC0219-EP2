@@ -1,0 +1,12 @@
+\BOOKMARK [1][-]{section.1}{Introdu\347\343o}{}% 1
+\BOOKMARK [1][-]{section.2}{Algoritmos Escolhidos}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Base64}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Rot13}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Vigenere}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Arquitetura CUDA}{}% 6
+\BOOKMARK [1][-]{section.4}{Os experimentos}{}% 7
+\BOOKMARK [1][-]{section.5}{Discuss\343o dos Resultados}{}% 8
+\BOOKMARK [2][-]{subsection.5.1}{Rot13}{section.5}% 9
+\BOOKMARK [2][-]{subsection.5.2}{Vigenere}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.3}{Base64}{section.5}% 11
+\BOOKMARK [1][-]{section.6}{Conclus\343o}{}% 12
