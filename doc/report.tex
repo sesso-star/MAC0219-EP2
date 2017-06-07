@@ -132,7 +132,7 @@ caracteres da entrada ($3 * 8$ bits) em quatro caracteres de texto da
 codificação ($4 * 6$ bits).
 
 \subsection{Rot13}
-\emph{Rot13} é um algoritmo bastante simples em que para cada letra é
+\emph{Rot13} é um algoritmo bastante simples em que cada letra é
 trocada por uma 13 índices a frente. Por exemplo: a letra "a" é
 substituída pela letra "n", a letra "b" por "o" e assim por diante.
 Para implementar uma versão que possa ser rodada em uma GPU separamos
@@ -199,18 +199,18 @@ Portanto esperamos que o tempo de um algoritmo sequencial seja linear
 para o tamanho do array de caracteres. Observamos tal comportamento no
 seguinte gráfico:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.65]{img/rot13_seqXpar/timeXsize_Rot-13 - Sequential.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.65]{img/rot13_seqXpar/timeXsize_Rot-13 - Sequential.png}}
+\end{figure}
 
 Apesar de 8 vezes o tamanho da bíblia (35.616.560 caracteres) ser um
 número bastante grande, até mesmo o algoritmo sequencial o realiza em
 apenas meio segundo. Esperamos que a implementação paralela, realize os
 cálculos pelo menos mais rápido que a implementação sequencial:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXsize_Rot-13 - Parallel.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXsize_Rot-13 - Parallel.png}}
+\end{figure}
 
 Como esse gráfico possui mais informações analisemos-o com mais cuidado.
 O eixo Y representa o tempo levado para o algoritmo ser executado.
@@ -223,7 +223,7 @@ para a GPU. Nesses casos representamos o tempo do algoritmo por um valor
 um pouco abaixo de 0 no gráfico. Comecemos a analisar o gráfico.
 
 Para cores roxas e mais azuladas, notamos que elas seguem o mesmo padrão
-linear de aproximadamente 0,15s a 0,18s. Os valores aonde há erro
+linear de aproximadamente 0,15s a 0,18s. Há valores aonde erros
 ocorrem, pois o número de blocos necessários para a combinação
 ultrapassaria o número máximo de blocos da GPU. Por exemplo para 1 warp
 (32 threads) e tamanho de entrada 1 Bíblia (4.452.070 caracteres) há a
@@ -234,9 +234,9 @@ inválidos, pois iriam requirir blocos demais. É interessante notar que
 para os valores adequados de warps por blocos o tempo de execução do
 programa é o mesmo:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXthread_Rot-13 - Parallel.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/timeXthread_Rot-13 - Parallel.png}}
+\end{figure}
 
 Nesse gráfico o eixo Y representa o tempo de execução do programa
 enquanto o eixo X representa o número de threads por bloco. Para cada
@@ -249,9 +249,9 @@ aumentar.
 
 Faremos agora uma comparação entre a implementação sequencial e a paralela:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_timeXsize_Rot-13 - Parallel vs Sequential.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_timeXsize_Rot-13 - Parallel vs Sequential.png}}
+\end{figure}
 
 Como discutido anteriormente, como o tempo de execução independe do
 número de threads por bloco, escolhemos 32 x 32 threads, pois
@@ -269,9 +269,9 @@ sequencial. De fato, talvez a implementação paralela só cresça devido a
 operação de leitura de arquivo que ocorre sequencialmente para ambos os
 algoritmos. Comparemos com o seguinte gráfico:
 
-%\begin{figure}[H]
-    %\makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
-%\end{figure}
+\begin{figure}[H]
+    \makebox[\textwidth][c]{\includegraphics[scale=.55]{img/rot13_seqXpar/compare_read_Rot-13 - Comparision with read operation.png}}
+\end{figure}
 
 Para gerar os dados dos pontos azuis, executamos um programa que somente
 lê um arquivo e o guarda em um vetor de caracteres. Essa é a mesma
