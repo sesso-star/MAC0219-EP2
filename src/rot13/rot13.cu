@@ -47,7 +47,7 @@ void rot13(char h_text[]) {
     cudaError_t err = cudaSuccess;
 
     size_t size = numElements * sizeof(char);
-    printf("string of %d elements\n", numElements);
+    /*printf("string of %d elements\n", numElements);*/
 
     // Allocate the device input vector A
     char *d_text = NULL;
@@ -61,7 +61,7 @@ void rot13(char h_text[]) {
 
     // Copy the host input vectors A and B in host memory to the device input vectors in
     // device memory
-    printf("Copy input data from the host memory to the CUDA device\n");
+    /*printf("Copy input data from the host memory to the CUDA device\n");*/
     err = cudaMemcpy(d_text, h_text, size, cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -73,7 +73,7 @@ void rot13(char h_text[]) {
     // Launch the Vector Add CUDA Kernel
     int threadsPerBlock = nWarps * 32;
     int blocksPerGrid =(numElements + threadsPerBlock - 1) / threadsPerBlock;
-    printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);
+    /*printf("CUDA kernel launch with %d blocks of %d threads\n", blocksPerGrid, threadsPerBlock);*/
 
     rot13Kernel<<<blocksPerGrid, threadsPerBlock>>>(d_text, numElements);
     err = cudaGetLastError();
@@ -86,7 +86,7 @@ void rot13(char h_text[]) {
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
-    printf("Copy output data from the CUDA device to the host memory\n");
+    /*printf("Copy output data from the CUDA device to the host memory\n");*/
     err = cudaMemcpy(h_text, d_text, size, cudaMemcpyDeviceToHost);
 
     if (err != cudaSuccess)
