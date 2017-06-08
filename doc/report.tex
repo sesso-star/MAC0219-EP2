@@ -156,6 +156,7 @@ e espaços.
 
 
 %%%%%%%%%%%%%%%%%%%%% ARQUITETURA NVIDIA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Arquitetura CUDA}
 Antes de mostrarmos nossos experimentos precisamos entender um pouco da
 arquitetura CUDA. Os principais conceitos que usamos durante esse 
@@ -238,8 +239,7 @@ levado para a execução de cada é relacionado às operações de leitura.
 \section{Discussão dos Resultados}
 Nessa seção apresentamos os resultados obtidos em cada um dos três 
 algoritmos paralelizados. Como os três algoritmos fazem trabalhos 
-parecidos, de substituição de caracteres, os resultados são parecidos
-assim como as conclusões tomadas. Para evitar redundância, vamos 
+parecidos, de substituição de caracteres, os resultados e as conclusões tomadas. Para evitar redundância, vamos 
 apresentar primeiro, com mais detalhe, os resultados do algoritmo Rot13
 e depois, de maneira menos detalhada, os resultados de Base64 e 
 Vigenere.
@@ -475,5 +475,9 @@ desempenho por conta de branching prediction.
 %%%%%%%%%%%%%%%%%%%%% CONCLUSAO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Conclusão}
+A partir dos dados analisados, podemos concluir que de fato a implementação paralela dos algoritmos mostrou ser mais rápida que a sequencial. Além disso também conseguimos notar o prejuízo das operações de leitura no algoritmo paralelo. Sem elas teríamos tempo constante para qualquer tamanho de entrada de arquivo (respeitando-se os limites máximos de threads por bloco e blocos por GPU).
+
+Apesar dos resultados positivos, a princípio não esperavamos que o algoritmo paralelo só seria mais eficiente para tamanhos de entrada tão grandes. No entanto devemos lembrar que para os 3 algoritmos utilizados, o kernel mandado para a GPU é bastante simples. Caso tivessemos que fazer operações mais complexas para cada elemento do arquivo de entrada, talvez o algoritmo paralelo se tornaria mais rápido que o sequencial para um menor tamanho do arquivo de entrada. Nesse caso o ângulo da reta do \emph{tempo X tamanho de entrada} da implementação sequencial provavelmente aumentaria. Enquanto para o caso paralelo o ângulo seria mantido e um valor pequeno seria adicionado a cada ponto da reta. Isto é, supondo que as retas fossem dadas por $f(x) = ax + b$, para o caso sequencial $a$ aumentaria enquanto no paralelo $b$ aumentaria. Portanto concluímos que para utilizar o uso da GPU para algum programa que não tenha um tamanho de entrada tão grande só é vantajoso quando a complexidade da operação em cada elemento é suficientemente alta.
+
 
 \end{document}
