@@ -23,7 +23,11 @@ vigenere: $(BIN_DIR)/vigenere_test_cuda
 
 rot13: $(BIN_DIR)/rot13_test_cuda
 
-rot13_test_seq: $(BIN_DIR)/rot13_test_seq
+rot13_seq: $(BIN_DIR)/rot13_test_seq
+
+base64_seq: $(BIN_DIR)/base64_test_seq
+
+vigenere_seq: $(BIN_DIR)/vigenere_test_seq
 
 read_test: $(BIN_DIR)/read_test
 

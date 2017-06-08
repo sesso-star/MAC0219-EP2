@@ -1,0 +1,62 @@
+Algoritmos de encriptação implementadas:
+    Rot13
+    Base64
+    Vigenere
+
+Os arquivos de cada implementação estão armazenados em src/
+
+Os arquivos compilados serão armazenados em bin/
+
+VERSÃO SEQUENCIAL
+    Como gerar:
+        $ make [NOME ALGORITMO]_seq
+
+        Por exemplo:
+            $ make rot13_seq
+
+    Como executar:
+        $ bin/[NOME ALGORITMO]_test_seq [ARQUIVO DE ENTRADA]
+
+        Por exemplo:
+            $ bin/rot13_test_seq test/4bible.txt
+
+VERSÃO CUDA
+    Como gerar:
+        $ make [NOME ALGORITMO]
+
+        Por exemplo:
+            $ make rot13
+
+    Como executar:
+        $ bin/[NOME ALGORITMO]_test_cuda [ARQUIVO ENTRADA] [NÚMERO DE WARPS
+        POR BLOCO]
+
+        Por exemplo:
+            $ bin/rot13_test_cuda test/4bible.txt 32
+
+Além disso para testar se os algoritmos estão funcionando corretamente fizemos
+uma especie de unit test que verifica se a saída de cada um dos algoritmos está
+correta. Para gerar a versão sequencial e cuda dos testes:
+    $ make unit_test_seq
+    $ make unit_test_cuda
+E para executa-las:
+    $ bin/unit_test_seq
+    $ bin/unit_test_cuda
+
+Também temos o programa utilizado para somente ler um arquivo (usado para
+testar o tempo de leitura de arquivos). Para gera-lo:
+    $ make read_test
+E para executa-lo:
+    $ bin/read_test [ARQUIVO DE ENTRADA]
+
+Os scripts para realizar as medições estão no diretório test/
+    test.sh - Script para executar os testes usando perf e os arquivos 1, 2,
+              4, 8 bible.txt
+              O argumento que ele recebe é o programa a ser testado
+    gen_graph.py - Script utilizado para gerar gráficos a partir de resultados
+                   dos testes.
+                   Leva como argumento o diretório de resultado da
+                   implementação:
+                   paralela,
+                   sequencial,
+
